@@ -42,47 +42,28 @@
       /*
        * メインシーン
        */
-      phina.define("MainScene", {
-        // 継承
-        superClass: 'DisplayScene',
-        // 初期化
-        init: function() {
-          // 親クラス初期化
-          this.superInit();
-          // 背景色
-          this.backgroundColor = 'black';
-          // shapeを作成してシーンに追加
-          var shape = Shape().addChildTo(this);
-          // 移動
-          shape.x = 320;
-          shape.y = 480;
-          // 回転
-          shape.update = function () {
-              shape.rotation += 100;
-          };
-
-          var shape2 = Shape().addChildTo(this);
-          // 移動
-          shape2.x = 320;
-          shape2.y = 240;
-          // 左上を原点に
-          shape2.origin.set(0,0);
-          // 回転
-          shape2.update = function() {
-            shape2.rotation += 4;
-          };
-
-          var shape3 = Shape().addChildTo(this);
-          // 移動
-          shape3.x = 320;
-          shape3.y = 720;
-          // 右下ｗｐ原点に
-          shape3.update = function () {
-            shape3.rotation += 2;
-          }
-
-        },
-      });
+        phina.define("MainScene", {
+          // 継承
+          superClass: 'DisplayScene',
+          // 初期化
+          init: function() {
+            // 親クラス初期化
+            this.superInit();
+            // 背景色
+            this.backgroundColor = 'black';
+            // Shapeを作成してシーンに追加・位置指定
+            var shape = Shape().addChildTo(this).setPosition(320, 480);
+            // 毎フレーム更新処理
+            shape.on('enterframe', function() {
+              // 回転
+              shape.rotation++;
+            });
+            shape.on('enterframe', function() {
+              // 移動
+              shape.moveBy(1,1);
+            });
+          },
+        });
       /*
        * メイン処理
        */
@@ -100,3 +81,4 @@
     </script>
   </body>
 </html>
+
