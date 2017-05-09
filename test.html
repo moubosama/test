@@ -1,0 +1,102 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    
+    <title>
+      TEST
+    </title>
+    <meta name="description" content="${description}" />
+    
+    <style>
+
+*, *:before, *:after {
+      box-sizing: border-box; 
+    }
+    html {
+      font-size: 62.5%;
+    }
+    body {
+      color: #444;
+      background-color: hsl(0, 0%, 96%);
+    }
+    h1 {
+      font-size: 1.8rem;
+    }
+
+    </style>
+  </head>
+  <body>
+    <script src="http://cdn.rawgit.com/phi-jp/phina.js/v0.2.0/build/phina.js"></script>
+    <script>
+    
+      // グローバルに展開
+      phina.globalize();
+      // 定数
+      var SCREEN_WIDTH = 640;
+      var SCREEN_HEIGHT = 960;
+      var SHAPE_SIZE = 16;
+      var SHAPE_HALF = SHAPE_SIZE / 2;
+      var NUM = 10;
+      /*
+       * メインシーン
+       */
+      phina.define("MainScene", {
+        // 継承
+        superClass: 'DisplayScene',
+        // 初期化
+        init: function() {
+          // 親クラス初期化
+          this.superInit();
+          // 背景色
+          this.backgroundColor = 'black';
+          // shapeを作成してシーンに追加
+          var shape = Shape().addChildTo(this);
+          // 移動
+          shape.x = 320;
+          shape.y = 480;
+          // 回転
+          shape.update = function () {
+              shape.rotation += 100;
+          };
+
+          var shape2 = Shape().addChildTo(this);
+          // 移動
+          shape2.x = 320;
+          shape2.y = 240;
+          // 左上を原点に
+          shape2.origin.set(0,0);
+          // 回転
+          shape2.update = function() {
+            shape2.rotation += 4;
+          };
+
+          var shape3 = Shape().addChildTo(this);
+          // 移動
+          shape3.x = 320;
+          shape3.y = 720;
+          // 右下ｗｐ原点に
+          shape3.update = function () {
+            shape3.rotation += 2;
+          }
+
+        },
+      });
+      /*
+       * メイン処理
+       */
+      phina.main(function() {
+        // アプリケーションを生成
+        var app = GameApp({
+          // MainScene から開始
+          startLabel: 'main',
+        });
+        // fps表示
+        //app.enableStats();
+        // 実行
+        app.run();
+      });
+    </script>
+  </body>
+</html>
