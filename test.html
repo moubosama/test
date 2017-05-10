@@ -30,91 +30,139 @@
   <body>
     <script src="http://cdn.rawgit.com/phi-jp/phina.js/v0.2.0/build/phina.js"></script>
     <script>
-       /// グローバルに展開
         phina.globalize();
-        // 定数
-        var SCREEN_WIDTH = 640;            // 画面横サイズ
-        var SCREEN_HEIGHT = 960;           // 画面縦サイズ
-        var GRID_SIZE = SCREEN_WIDTH / 4;  // グリッドのサイズ
-        var PIECE_SIZE = GRID_SIZE * 0.95; // ピースの大きさ
-        var PIECE_NUM_XY = 4;              // 縦横のピース数
-        var PIECE_OFFSET = GRID_SIZE / 2;  // オフセット値
-        /*
-         * メインシーン
-         */
-        phina.define('MainScene', {
+
+        //定数
+        var SPEED = 8; // 移動速度
+        var STONE_NUM = 20; // 石の数
+        var SCREEN_WIDTH = 640;
+        var SCREEN_HEIGHT = 960;
+        var SHAPE_SIZE = 16;
+        var SHAPE_HALF = SHAPE_SIZE / 2;
+
+      var ASSETS = {
+        // 画像
+        image: {
+          'tomapiko': 'https://rawgit.com/phi-jp/phina.js/develop/assets/images/tomapiko_ss.png',
+        },
+        // スプライトシート
+        spritesheet: {
+          "tomapiko_ss":
+          {
+            // フレーム情報
+            "frame": {
+              "width": 64, // 1フレームの画像サイズ（横）
+              "height": 64, // 1フレームの画像サイズ（縦）
+              "cols": 6, // フレーム数（横）
+              "rows": 3, // フレーム数（縦）
+            },
+            // アニメーション情報
+            "animations" : {
+              "walk": { // アニメーション名
+                "frames": [12,13,14], // フレーム番号範囲
+                "next": "walk", // 次のアニメーション
+                "frequency": 6, // アニメーション間隔
+              },
+            }
+          },
+        }
+      };       
+      /*
+       * メインシーン
+       */
+        phina.define("MainScene", {
+          // 継承
           superClass: 'DisplayScene',
           // コンストラクタ
           init: function() {
             // 親クラス初期化
-            this.superInit();
-            // 背景色
-            this.backgroundColor = 'gray';
-            // グリッド
-            var grid = Grid(SCREEN_WIDTH, PIECE_NUM_XY);
-            // ピースグループ
-            var pieceGroup = DisplayElement().addChildTo(this);
-            // ピース配置
-            PIECE_NUM_XY.times(function(spanX) {
-              PIECE_NUM_XY.times(function(spanY) {
-                // 番号
-                var num = spanY * PIECE_NUM_XY + spanX + 1;
-                // ピース作成
-                var piece = Piece(num).addChildTo(pieceGroup);
-                // Gridを利用して配置
-                piece.x = grid.span(spanX) + PIECE_OFFSET;
-                piece.y = grid.span(spanY) + PIECE_OFFSET;
-                // タッチを有効にする
-                piece.setInteractive(true);
-                // タッチされた時の処理
-                piece.onpointend = function() {
-                  console.log(this.num);
-                };
-                if (num === 16) piece.hide();
-              });
+           this.superInit({
+              // 画面サイズ
+              width: 640,
             });
-          },
-        });
-        /*
-         * ピースクラス
-         */
-         phina.define('Piece', {
-          // RectangleShapeを継承
-          superClass: 'phina.display.RectangleShape',
-          // コンストラクタ
-          init: function (num) {
-            // 親クラス
-            this.superInit({
-              width: PIECE_SIZE,
-              height: PIECE_SIZE,
-              cornerRadius: 10,
-              fill: 'silver',
-              stroke: 'gold',
-            });
-            // 数字
-            this.num = num;
-            // 数字表示用ラベル
-            this.label = Label({
-              text: this.num + '',
-              fontSize: PIECE_SIZE * 0.8,
-              fill: 'white',
+            // 背景
+            this.backgroundColor = 'skyblue';
+
+            // トマピヨの初期位置
+            var tomapiko = Sprite('tomapiko', 64, 64).addChildTo(this);
+            tomapiko.x = this.gridX.center();
+            tomapiko.y = this.gridY.span(15);
+            var anim = FrameAnimation('tomapiko_ss').attachTo(tomapiko);
+            // アニメーションを指定する
+            anim.gotoAndPlay('walk');
+            // 更新処理
+            tomapiko.update = function(app) {
+              var key = app.keyboard;
+              // 左右移動,向き
+              if (key.getKey('left')) {
+                tomapiko.x -= SPEED;
+                tomapiko.scaleX = 1;
+              }
+              if (key.getKey('right')) {
+                tomapiko.x += SPEED;
+                tomapiko.scaleX = -1;
+              }
+
+              if (tomapiko.left < 0) {
+                tomapiko.x += SPEED;
+              } else if (640 < tomapiko.right) {
+                tomapiko.x -= SPEED;
+              }
+            };
+
+            // ラベル
+            var label = Label({
+              text: '',
+              fontSize: 30,
+              x: this.gridX.center(),
+              y: this.gridY.span(0.5),
             }).addChildTo(this);
+            this.update = function(app) {
+              // 経過秒数表示
+              label.text = '経過秒数:' + Math.floor(app.elapsedTime / 1000);
+            };
+
+           
+            for (var i = 1; i <= STONE_NUM; i++) {
+                var stone = CircleShape({
+                  radius: 20,
+                  fill: 'blue',
+                }).addChildTo(this);
+                 stone.x = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
+                 stone.y = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
+                 stone.physical.gravity.y = 0.2;
+                                 // 更新処理
+                this.update = function() {
+                  // 判定用の円
+                  var c = Circle(tomapiko.x, tomapiko.y, tomapiko.radius);
+                  
+                  // 石と衝突判定
+                  if (Collision.testCircleCircle(c, stone)) {
+                    // 石に当たったら
+                    // this.exit();
+                    console.log("HIT!");
+                  } else {
+                    stone.fill = 'blue';
+                  }
+                };
+            }
+
           },
-         });
-        /*
-         * メイン処理
-         */
-        phina.main(function() {
-          // アプリケーションを生成
-          var app = GameApp({
-            // MainScene から開始
-            startLabel: 'main',
-          });
-          // fps表示
-          //app.enableStats();
-          // 実行
-          app.run();
         });
+
+       /*
+       * メイン処理
+       */
+      phina.main(function() {
+        // アプリケーションを生成
+        var app = GameApp({
+          title: "トマピコドッジ",
+          assets: ASSETS,
+          tartLabel: 'main',
+        });
+        // 実行
+        app.run();
+      });
     </script>
   </body>
 </html>
