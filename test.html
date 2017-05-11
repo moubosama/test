@@ -35,8 +35,8 @@
         //定数
         var SPEED = 8; // 移動速度
         var STONE_NUM = 20; // 石の数
-        var SCREEN_WIDTH = 640;
-        var SCREEN_HEIGHT = 960;
+        var SCREEN_WIDTH   = 640; // 画面横サイズ
+        var SCREEN_HEIGHT  = 800; // 画面縦サイズ
         var SHAPE_SIZE = 16;
         var SHAPE_HALF = SHAPE_SIZE / 2;
 
@@ -44,6 +44,10 @@
         // 画像
         image: {
           'tomapiko': 'https://rawgit.com/phi-jp/phina.js/develop/assets/images/tomapiko_ss.png',
+            // 地面
+            'ground': 'https://rawgit.com/alkn203/tomapiko_void/master/assets/image/ground.png',
+            // 岩
+            'stone': 'https://rawgit.com/alkn203/tomapiko_void/master/assets/image/ground.png',
         },
         // スプライトシート
         spritesheet: {
@@ -78,15 +82,25 @@
             // 親クラス初期化
            this.superInit({
               // 画面サイズ
-              width: 640,
+              width: SCREEN_WIDTH,
+              height: SCREEN_HEIGHT,
             });
             // 背景
             this.backgroundColor = 'skyblue';
+            // カスタムgrid
+            // デフォルトには16ｘ16のgridが設定される、新たに画面の横サイズを１０分割する
+            var grid = Grid(SCREEN_WIDTH, 10);
+            // 繰り返し処理
+            var self = this;
+            (10).times(function(i){
+              // 地面配置
+              Ground().addChildTo(self).setPosition(grid.span(i), grid.span(11.5));
+            });
 
             // トマピヨの初期位置
             var tomapiko = Sprite('tomapiko', 64, 64).addChildTo(this);
             tomapiko.x = this.gridX.center();
-            tomapiko.y = this.gridY.span(15);
+            tomapiko.y = this.gridY.span(14.2);
             var anim = FrameAnimation('tomapiko_ss').attachTo(tomapiko);
             // アニメーションを指定する
             anim.gotoAndPlay('walk');
@@ -109,46 +123,59 @@
                 tomapiko.x -= SPEED;
               }
             };
-
-            // ラベル
-            var label = Label({
-              text: '',
-              fontSize: 30,
-              x: this.gridX.center(),
-              y: this.gridY.span(0.5),
-            }).addChildTo(this);
-            this.update = function(app) {
-              // 経過秒数表示
-              label.text = '経過秒数:' + Math.floor(app.elapsedTime / 1000);
-            };
-
            
-            for (var i = 1; i <= STONE_NUM; i++) {
-                var stone = CircleShape({
-                  radius: 20,
-                  fill: 'blue',
-                }).addChildTo(this);
-                 stone.x = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
-                 stone.y = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
-                 stone.physical.gravity.y = 0.2;
-                                 // 更新処理
-                this.update = function() {
-                  // 判定用の円
-                  var c = Circle(tomapiko.x, tomapiko.y, tomapiko.radius);
-                  
-                  // 石と衝突判定
-                  if (Collision.testCircleCircle(c, stone)) {
-                    // 石に当たったら
-                    // this.exit();
-                    console.log("HIT!");
-                  } else {
-                    stone.fill = 'blue';
-                  }
-                };
-            }
+            var stone = CircleShape({
+              radius: 20,
+              fill: 'blue',
+            }).addChildTo(this);
+
+             stone.physical.gravity.y = 0.2;
+                             // 更新処理
+            this.update = function() {
+              // 判定用の円
+              var c = Circle(tomapiko.x, tomapiko.y, tomapiko.radius);
+              
+              // 石と衝突判定
+              if (Collision.testCircleCircle(c, stone)) {
+                // 石に当たったら
+                // this.exit();
+                console.log("HIT!");
+              } else {
+                stone.fill = 'blue';
+              }
+            };
+          
 
           },
         });
+
+      /*
+       * 地面クラス
+       */
+       phina.define('Ground', {
+        // 継承
+        superClass: 'Sprite',
+        // コンストラクタ
+        init: function() {
+          // 親クラス初期化
+          this.superInit('ground');
+          // 原点を左上
+          this.origin.set(0,0);
+        },
+       });
+      /*
+       * 岩クラス
+       */
+       phina.define('stone', {
+        superClass: 'Sprite',
+        // コンストラクタ
+        init: function() {
+          this.superInit('stone');
+        this.x = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
+         this.y = Random.randint(SHAPE_HALF, SCREEN_WIDTH - SHAPE_HALF);
+        },/
+        
+       });
 
        /*
        * メイン処理
@@ -159,6 +186,7 @@
           title: "トマピコドッジ",
           assets: ASSETS,
           tartLabel: 'main',
+          // startLabel: 'splash',
         });
         // 実行
         app.run();
